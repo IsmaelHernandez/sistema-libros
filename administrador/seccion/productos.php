@@ -5,6 +5,7 @@
     
     /* Validar formulario */
     $tnombre=(isset($_POST['tnombre']))?$_POST['tnombre']:""; 
+    $tid=(isset($_POST['id']))?$_POST['id']:"";
     $tautor=(isset($_POST['tautor']))?$_POST['tautor']:"";
     $tprecio=(isset($_POST['tprecio']))?$_POST['tprecio']:"";
     $timagen=(isset($_FILES['timagen']['name']))?$_FILES['timagen']['name']:"";
@@ -25,16 +26,42 @@
             $sentanciaSQL->execute();
             break;
 
-        case "Editar":
-            echo "editar producto";
-            break;
+        case "Modificar":
+                $sentanciaSQL= $conexion->prepare("UPDATE libros SET tnombre=:tnombre, tautor=:tautor, tprecio=:tprecio WHERE id=:id");
+                $sentanciaSQL->bindParam(':tnombre',$txtNombre);
+                $sentanciaSQL->bindParam(':tautor',$txtAutor);
+                $sentanciaSQL->bindParam(':tprecio',$txtPrecio);
+                $sentanciaSQL->bindParam(':id',$tid);
+                $sentanciaSQL->execute();
+                break;
 
         case "Eliminar":
             echo "eliminar producto";
             break;
+
+        case "Seleccionar":
+                $sentanciaSQL= $conexion->prepare("SELECT * FROM libros WHERE id=:id");
+                $sentanciaSQL->bindParam(':id',$tid);
+                $sentanciaSQL->execute();
+                //cargar los datos 1 a 1
+                $libro=$sentanciaSQL->fetch(PDO::FETCH_LAZY);
+
+                $txtNombre=$libro['tnombre'];
+                $txtAutor=$libro['tautor'];
+                $txtPrecio=$libro['tprecio'];
+                // $txtImagen=$libro['timagen'];
+                break;
+        
+        case "Borrar":
+                $sentanciaSQL= $conexion->prepare("DELETE FROM libros WHERE id=:id");
+                $sentanciaSQL->bindParam(':id',$tid);
+                $sentanciaSQL->execute();
+                break;
     }
 
-    
+    $sentanciaSQL= $conexion->prepare("SELECT * FROM libros");
+    $sentanciaSQL->execute();
+    $listarLibros=$sentanciaSQL->fetchAll(PDO::FETCH_ASSOC);
 
     
 ?>
@@ -47,23 +74,24 @@
             <form action="" method="POST" enctype="multipart/form-data">
                 <div class = "form-group">
                 <label for="">Nombre de libro</label>
-                <input type="text" class="form-control" id="tnombre" name="tnombre"  placeholder="Enter Name">
+                <input type="text" class="form-control" id="tnombre" name="tnombre" value="<?php echo $txtNombre; ?>"  placeholder="Enter Name">
                 </div>
                 <div class = "form-group">
                 <label for="">Autor</label>
-                <input type="text" class="form-control" id="tautor" name="tautor"  placeholder="Enter Autor">
+                <input type="text" class="form-control" id="tautor" name="tautor" value="<?php echo $txtAutor; ?>"  placeholder="Enter Autor">
                 </div>
                 <div class = "form-group">
                 <label">Costo</label>
-                <input type="number" class="form-control" id="tprecio" name="tprecio" placeholder="Enter Price">
+                <input type="number" class="form-control" id="tprecio" name="tprecio" value="<?php echo $txtPrecio; ?>" placeholder="Enter Price">
                 </div>
                 <div class = "form-group">
                 <label">Imagen</label>
+                
                 <input type="file" class="form-control" id="timagen" name="timagen" placeholder="Enter Price">
                 </div>
                 <div class="btn-group" role="group" aria-label="">
                     <button type="submit" name="accion" value="Agregar" class="btn btn-primary">Agregar</button>
-                    <button type="submit" name="accion" value="Editar" class="btn btn-secondary">Editar</button>
+                    <button type="submit" name="accion" value="Modificar" class="btn btn-secondary">Modificar</button>
                     <button type="submit" name="accion" value="Eliminar" class="btn btn-danger">Eliminar</button>
                 </div>
             </form>
@@ -83,15 +111,22 @@
              </tr>
          </thead>
          <tbody>
-             <?php ?>
+             <?php foreach($listarLibros as $libro) { ?>
              <tr>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 <td></td>
+                 <td><?php echo $libro['id']; ?></td>
+                 <td><?php echo $libro['tnombre']; ?></td>
+                 <td><?php echo $libro['tautor']; ?></td>
+                 <td><?php echo $libro['tprecio']; ?></td>
+                 <td><?php echo $libro['timagen']; ?></td>
+                 <td>
+                     <form action="" method="post">
+                        <input type="hidden" name="id" id="id" value="<?php echo $libro['id']; ?>">
+                        <input type="submit" class="btn btn-primary" name="accion" value="Seleccionar">
+                        <input type="submit" class="btn btn-danger" name="accion" value="Borrar">
+                     </form>
+                 </td>
              </tr>
+             <?php } ?>
          </tbody>
      </table>
  </div>
